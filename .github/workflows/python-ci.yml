@@ -1,0 +1,33 @@
+name: Python CI (minimal) # Человекочитаемое имя workflow в интерфейсе GitHub Actions.
+
+on: # Блок событий-триггеров, которые запускают workflow.
+  push: # Запускать workflow при каждом push.
+    branches: [main] # Ограничить push-триггер только веткой main.
+  pull_request: # Запускать workflow для всех pull request.
+  workflow_dispatch: # Разрешить ручной запуск из вкладки Actions.
+
+jobs: # Блок задач (jobs), выполняемых в рамках workflow.
+  test: # Идентификатор job с шагами проверки Python-проекта.
+    runs-on: ubuntu-latest # Использовать последний доступный Ubuntu runner от GitHub.
+
+    steps: # Последовательность шагов, выполняемых внутри job.
+      - name: Checkout repository # Название шага: получить исходный код репозитория.
+        uses: actions/checkout@v4 # Официальный action для checkout текущего репозитория.
+
+      - name: Set up Python # Название шага: установить и активировать нужный Python.
+        uses: actions/setup-python@v5 # Официальный action для настройки версии Python.
+        with: # Входные параметры для actions/setup-python.
+          python-version: '3.11' # Фиксированная версия Python для воспроизводимого CI.
+
+      - name: Install dependencies # Название шага: установить зависимости проекта.
+        run: | # Многострочный shell-скрипт, выполняемый на runner.
+          python -m pip install --upgrade pip # Обновить pip до актуальной версии.
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi # Установить зависимости, только если есть requirements.txt.
+
+      - name: Run tests # Название шага: запустить тесты проекта.
+        run: | # Многострочный shell-скрипт для условного запуска pytest.
+          if [ -d tests ]; then # Проверить, существует ли директория tests.
+            python -m pytest -q # Запустить тесты в компактном (quiet) режиме.
+          else # Ветка на случай отсутствия тестовой директории.
+            echo "No tests directory found, skipping pytest" # Явно сообщить в логах, что тесты пропущены.
+          fi # Завершение условного блока if.
